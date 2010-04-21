@@ -1,17 +1,144 @@
 = snarl-snp
 
-Description goes here.
+Snarl Network Protocol(SNP) Client for Snarl. You can send messages to Snarl over LAN.
 
-== Note on Patches/Pull Requests
- 
-* Fork the project.
-* Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
-* Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
-* Send me a pull request. Bonus points for topic branches.
+Snarl is a popup-message application on Windows. Alike Growl.
+http://www.fullphat.net/
+SNP 1.0 documentation is here.
+http://www.fullphat.net/dev/snp/index.htm
+
+If you are able to read Japanese, please read README.rdoc.ja.
+
+== Requirements
+
+- Ruby 1.8.6 or later (including 1.9.1)
+
+== Installation
+
+  gem install snarl-snp
+
+No other gems are required (only to test, WebMock is needed).
+
+== Contact
+
+ezookojo@gmail.com
+http://d.hatena.ne.jp/kitamomonga/ (in Japanese)
+
+== Short Exsamples
+
+@host is a Windows machine host which is running Snarl (LAN only).
+Set the value in advance, then copy and paste codes on irb.
+
+  @host = '192.168.0.2' # Snarl machine host
+
+When nil/undef, Snarl::SNP uses '127.0.0.1'. Default port is 9887.
+
+=== Simple Popup (anonymous application)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.message(@host, 'title', 'Hello, Snarl!')
+
+or
+
+    Snarl::SNP.new(@host).message('title', 'Hello, Snarl!')
+    Snarl::SNP.open(@host){|snp| snp.message('title', 'Hello, Snarl!')}
+
+Snarl::SNP can simply send message in this way, but you cannot change popup settings on Snarl.
+If you want to change popup settings(i.e. changing a color style), at least register an "application name".
+
+NOTE: The multibyte anonymous application messages may not work well.
+
+=== Popup Application (anonymous class)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.notification('title', 'text', nil, 10)
+    end
+    # if you wish
+    # Snarl::SNP.new(@host).unregister('Ruby-Snarl')
+
+"application name" is Ruby-Snarl.
+On Snarl, it's shown in "Apps" - "The following applications are registered with Snarl:" - "Ruby-Snarl on xxx.xxx.xxx.xxx".
+You can change popup settings now.
+If you want to classify messages(i.e. a green popup message, a red popup message, ...), set classes.
+
+=== Unregister Application (remove application setting from Snarl)
+
+When sending "unregister" or starting Snarl, application names are hideen from setting window.
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.unregister('Ruby-Snarl')
+    end
+
+An unregister command makes the application "inactive".
+The application is removed from Snarl setting window, and Snarl users can not change their popup settings.
+If you wish to allow users to change the popup settings, you should not use unregister commands on your usual scripts.
+
+=== Popup Application (full)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.add_class('type1')
+      snp.add_class('type2')
+      snp.notification('title', 'type1 text', nil, 10, 'type1')
+      snp.notification('title', 'type2 text', nil, 10, 'type2')
+    end
+    # if you wish
+    # Snarl::SNP.new(@host).unregister('Ruby-Snarl')
+
+Classes are used for message classification. They are shown in "Apps" - "Notification classes:".
+If you change style of "type1" class on Snarl, all "type1" messages of application "Ruby-Snarl" pop in your way.
+
+=== Send SNP raw command strings
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.request("type=SNP#?version=1.1#?action=register#?app=Ruby-Snarl\r\n")
+      snp.request("type=SNP#?version=1.1#?action=add_class#?app=Ruby-Snarl#?class=type1\r\n")
+      snp.request("type=SNP#?version=1.1#?action=add_class#?app=Ruby-Snarl#?class=type2\r\n")
+      snp.request("type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type1#?title=title#?text=type1 text!#?timeout=10\r\n")
+      snp.request("type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type2#?title=title#?text=type2 text!#?timeout=10\r\n")
+    end
+    # if you wish
+    Snarl::SNP.new(@host).request("type=SNP#?version=1.1#?action=unregister#?app=Ruby-Snarl\r\n")
+
+"\r\n" is must.
+Don't use "\r\n" or "\r" in message body. Use "\n" instead.
+
+=== Multibyte Popup
+
+    require 'rubygems'
+    require 'snarl/snp'
+    require 'kconv'
+    Snarl::SNP.message(@host, 'タイトル'.tosjis, '日本語'.tosjis)
+
+Windows encoding is required.
+
+== FAQ
+
+=== My autotest/autospec shutdowns after test. Snarl got no message.
+
+Set Autotest::Snarl.host on ".autotest" file.
+
+  require 'snarl/autotest'
+  Autotest::Snarl.host = '192.168.0.1'
+
+You may set OS environment variable SNARL_HOST.
+Autotest::Snarl uses it instead of default host 127.0.0.1.
+If you use Snarl on 192.168.0.1 (and use bash as a shell),
+
+  SNARL_HOST=192.168.0.1 autotest
 
 == Copyright
 
-Copyright (c) 2010 kitamomonga. See LICENSE for details.
+Copyright (c) 2010 kitamomonga (TATEWAKI Hiroyuki).
+This software is MIT license, see MIT-LICENSE file for details.
+Snarl and SNP is not mine. See http://www.fullphat.net/ .

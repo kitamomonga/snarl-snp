@@ -1,0 +1,126 @@
+= SNP Connection Details with Snarl::SNP
+
+SNP のコマンド文字列（実際に Snarl の動作してるマシンのポート 9887 に TCPSocket#write で送られる文字列）は以下のようなものです。
+
+  type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type1#?title=title#?text=type1 text!#?timeout=10\r\n
+
+data=value というペアが、区切り文字 #? で結合されて送信されます。終端は "\r\n" です。
+value には #? という文字を含むことは出来ません。"\r" を含むことも出来ません。
+Snarl::SNP のメソッドは、この長大な文字列を直接記述する代わりに、引数と内部デフォルト値から組み立てます。
+
+    snp.register('Ruby-Snarl')
+    snp.add_class('type1')
+    snp.notification('title', 'type1 text', nil, 10, 'type1')
+
+と
+    snp.request("type=SNP#?version=1.1#?action=register#?app=Ruby-Snarl\r\n")
+    snp.request("type=SNP#?version=1.1#?action=add_class#?app=Ruby-Snarl#?class=type1\r\n")
+    snp.request("type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type1#?title=title#?text=type1 text!#?timeout=10\r\n")
+
+は、最終的に Snarl に送信された文字列は全く同じになります。
+Snarl::SNP は "\r" や "\r\n" は "\n" に置換して処理しますが、 #? を送ることは依然出来ません。エスケープの仕方を知ってる方はぜひご一報を。
+
+
+== 匿名クラスでポップアップを依頼する
+
+「アプリケーション名」を登録して、ポップアップ依頼を送ります。
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.notification('title', 'text', nil, 10)
+    end
+    # as you like
+    # Snarl::SNP.new(@host).unregister('Ruby-Snarl')
+
+アプリケーション登録（register）だけを伴ったポップアップ依頼です。
+登録されたアプリケーションは、Snarl 本体の設定画面の「Apps」の「The following applications are registered with Snarl:」で列挙されます。SNP 経由の場合は「アプリケーション名 on 接続元アドレス」（例：「Ruby-Snarl on xxx.xxx.xxx.xxx」）と表示されます。
+これは SNP 経由で unregister するか、Snarl を再起動するまで保持されます。
+
+なお、Snarl::SNP におけるアプリケーション名は Snarl::SNP オブジェクトにつきひとつです。別名義のアプリケーションを使用したい場合は、Snarl::SNP オブジェクトを別途作成してください。
+
+=== 匿名アプリケーションポップアップ依頼
+
+アプリケーション設定が register されていない状態のとき（Snarl 再起動後など）に notification を送ると「匿名ポップアップ」として処理されます。スタイル等は反映されませんが、ポップアップは普通に行われます（これを意図的に利用するととても便利なのですが、なぜか日本語が化けるので説明では省いています）。
+
+    require 'rubygems'; require 'snarl/snp'; require 'kconv'
+    Snarl::SNP.new(@host).notification('title', 'あいうえお'.tosjis) #=> "あいぁE"
+
+「○○というアプリケーション用のポップアップ依頼だから○○アプリケーションの設定を自動で登録状態にして読み込んで使用する」というようなことはありません。
+
+=== 匿名クラスポップアップの表示を Snarl 側でカスタマイズする
+
+クラス設定を事前に SNP で送っていない場合、Snarl におけるクラスは匿名となります。本来は何らかのクラスを最低限1個、add_class で設定すべきなのですが、なくてもポップアップの動作設定はできます。
+アプリケーションを登録すると、アプリケーション名義でクラス設定をまとめることができます（○○アプリケーションのクラス設定1、のように）。
+次項のクラスつきポップアップ依頼を参考にして、<all>（他にクラス設定が何もないとき）または <other>（他の名前のクラス設定はあるが、匿名クラスを使うとき）で設定変更してください（このアプリケーションの匿名クラスポップアップ全てが影響を受けます）。これが好ましくない、またはクラスが複数あるほうが設定が使い分けられて都合がいいという場合は普通に SNP 経由でクラスを設定します。
+
+=== アプリケーションの2重登録
+
+既に同名（で、通信元が同ホスト）のアプリケーションが登録状態の場合、Snarl は「2度目以降の register」に対してエラーを返します。
+が、Snarl::SNP はこれを例外として扱いません（例外にすることもできます）。
+そもそもの登録行為自体、前回の register と今回の notification の間に Snarl が一度でも再起動されていると登録状態が解除されてしまっているという、永続性に疑問のあるてきとうなものなので、Snarl::SNP オブジェクト生成ごとに念のために register しておく、くらいの意気で構わないと思われます。
+
+  Snarl::SNP.open(@host) do |snp|
+    snp.register(app)
+    snp.add_class(class_id)
+    snp.notification(...)
+  end
+
+はセットとして毎回書いておくことをお勧めします。
+
+== unregister の罠
+
+スクリプトでは unregister がぽつんと 1個離れて「お好みで」とかコメントがついてますが、unregister は「Snarl でのアプリケーション登録状態を（クラスごと）解除する」という効果をもちます。
+register したんだから unregister もブロック内にペアで書くべき、なのですが、困ったことに Snarl は「unregister したアプリケーションは設定ウィンドウから消えて選べない」という仕様になっています。
+なので、ユーザーが「このアプリケーションの表示設定を変えたい」と思っても、スクリプト内で unregister してしまうと Snarl の設定ウィンドウにはそのアプリケーションが表示されていないという事態になってしまいます。
+
+ irb> require 'rubygems'; require 'snarl/snp'
+ irb> @host = '127.0.0.1'
+ irb> snp = Snarl::SNP.new(@host)
+ irb> # Snarl の App 欄に「Ruby-Snarl on xxx.xxx.xxx.xxx」があれば一旦 unregister
+ irb> # snp.unregister('Ruby-Snarl')
+ irb> # 以下で Snarl の App 欄に「Ruby-Snarl on xxx.xxx.xxx.xxx」が出現する
+ irb> snp.register('Ruby-Snarl')
+ irb> # 以下で App 欄から「Ruby-Snarl on xxx.xxx.xxx.xxx」が消えてしまい触れなくなる
+ irb> snp.unregister('Ruby-Snarl')
+ irb> # コマンド送信ごとに TCPSocket.open(@host){...} してるので irb はこのまま閉じてOK
+
+なので、unregister は「Snarl の設定欄から自分の設定の表示を消したい」ときにのみ、行ってください。
+正直、普段使うようなコマンドではないと思われます。
+
+=== unregister してもユーザー設定自体は消えない
+
+unregister では Snarl の設定一覧から一旦消えるだけで、アプリケーションごとに設定した項目自体は Snarl のファイルに保存されています。設定を消す場合は
+
+  ユーザーフォルダ\Application Data\full phat\snarl\etc\.snarl
+
+というファイルの中の、 [app.なんとか] の該当しそうなブロックを適当に（あるいは行単位で慎重に）削除してください。
+適当な名前でテストしまくっていると全部記録されていて物凄い量になっていたりするので気をつけましょう。適宜掃除を。
+
+== クラスつきでポップアップを依頼する
+
+「アプリケーション名」を登録し「クラス名」を設定したあとに、それらを指定してポップアップ依頼を送ります。一番正当なものです。
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.add_class('type1')
+      snp.add_class('type2')
+      snp.notification('title', 'type1 text', nil, 10, 'type1')
+      snp.notification('title', 'type2 text', nil, 10, 'type2')
+      snp.unregister('Ruby-Snarl')
+    end
+
+アプリケーション登録（register）とクラス名追加（add_class）を伴ったポップアップ依頼です。
+
+1. Snarl::SNP#register でアプリケーション名を登録する
+2. Snarl::SNP#add_class でクラス名を使用するぶんだけ登録する（複数可能）
+3. Snarl::SNP#notification で特定クラス使用のポップアップ依頼を送る
+4. Snarl::SNP#unregister でアプリケーション名を削除する
+
+という流れになります。
+クラス名は Snarl の「App」欄の当該アプリ名選択後の「Notification classes:」に列挙されます。
+type1 と書かれた欄を選んでたとえば「Visual」にて Style と Scheme を変更すれば、'type1' とした notification が来た場合にその Style でポップアップが表示されます。
+red というクラスつきの依頼では赤っぽいポップアップを、green というクラスつきの依頼では緑っぽいポップアップを使う、といったような設定ができます。

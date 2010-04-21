@@ -1,0 +1,166 @@
+-*- coding: utf-8 -*-
+
+= Snarl-SNP
+
+snarl/snp（ruby-snarl-snp）は、Snarl を LAN 越しに操作するための SNP プロトコルクライアントを提供します。
+Ruby スクリプトの結果（の30字くらい）を Snarl に送ることができます。
+
+Snarl は Windows で動作する、Growl っぽい通知ポップアップを行うソフトウェアです。
+http://www.fullphat.net/
+
+SNP は Snarl Networking Protocol です。SNP1.1 は文書化されていませんが、1.0 は以下の場所にあります。
+http://www.fullphat.net/dev/snp/index.htm
+
+== Requirements
+
+- Ruby 1.8.6 or later (including 1.9.1)
+
+今のところ必要な追加ライブラリはありません。
+
+== Installation
+
+  gem install snarl-snp
+
+内部では Rubygems を使用してないので、lib/snarl/snp.rb と lib/snarl/snp/ だけあればたぶん動きます。
+
+== Contact
+
+ezookojo@gmail.com
+きたももんががきたん。
+http://d.hatena.ne.jp/kitamomonga/
+
+== License
+
+MIT License です。使用改変配布商用等を無制限に許可し、ソフトウェアに関する責任は全く負わないものとします。
+正確には MIT-LICENSE ファイルを http://sourceforge.jp/projects/opensource/wiki/licenses%2FMIT_license などを参考に読んでください。
+
+== Usage
+
+  require 'rubygems'
+  require 'snarl/snp'
+  require 'kconv' # on Ruby 1.8
+  
+  Snalr::SNP.open(Snarlが動いてるホスト) do |snp|
+    snp.register(設定区別用アプリケーション名)
+    snp.notification(メッセージ.tosjis) # toutf8かもしれない
+  end
+  # メッセージ表示をメッセージ種別ごとに分けたい場合は add_class(種別用クラス名) でクラスを追加したあとでクラス指定つきの notification をする
+  # こちらの環境では日本語文字は Shift_JIS にする必要があるが世間様では UTF-8 で通るらしい（たぶんWindowsのバージョン依存）
+
+== Short Exsamples
+
+@host は Snarl の動作している Windows マシンのホスト名か IP アドレスです（TCPSocket.open で使えるもの）。Snarl 本体の仕様上、LAN 内限定です。
+irb 上でコピペするときに便利なように、対象ホストは @host としか書いてません。事前に設定しておいてください。
+
+  @host = '192.168.0.2' # Snarl machine host
+
+Snarl が動作しているマシン上でスクリプトを動作させる場合は無設定の nil か "127.0.0.1" で OK です。
+何らかの理由で接続できない場合は Errno::ECONNREFUSED が出ます。
+
+=== Popup Application (anonymous class)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.notification('title', 'text', nil, 10)
+    end
+    # if you wish
+    # Snarl::SNP.new(@host).unregister('Ruby-Snarl')
+
+Snarl の設定画面では「Ruby-Snarl」と名づけられます。
+ポップアップメッセージは「title」「text」という2行で、標準アイコンつきで10秒表示されます。
+
+=== Unregister Application (remove application setting from Snarl)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.unregister('Ruby-Snarl')
+    end
+
+unregister は Snarl のポップアップ動作設定画面からアプリケーションを一旦削除します。
+register -> unregister という流れ的には使うべきっぽいんですが意外と不便なので多用しないことをお勧めします。
+設定された内容自体は Snarl のユーザーファイルに保存されており、register コマンドが来たときに再度ロードされます。
+
+アプリケーションは Snarl を再起動すると画面からは一旦消えます（unregister と同じ動作）。設定完全消去はファイルを編集します。
+
+=== Popup Application (full)
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.register('Ruby-Snarl')
+      snp.add_class('type1')
+      snp.add_class('type2')
+      snp.notification('title', 'type1 text', nil, 10, 'type1')
+      snp.notification(:title => 'title', :text => 'type2 text', :icon => nil, :timeout => 7, :class => 'type2')
+    end
+    # if you wish
+    # Snarl::SNP.new(@host).unregister('Ruby-Snarl')
+
+add_class でクラス名を指定することも出来ます（Ruby の Class オブジェクトとは無関係です）。
+Snarl の設定画面では「Ruby-Snarl の中のクラス type1」という区分で、ポップアップスタイル等を変更できます。
+メッセージごとにウィンドウの色などを変えたいときに便利です。
+クラス名の設定は notification の第 5 引数になりますが、若干長いのでキーワード引数指定の活用などもどうぞ。
+
+=== Send SNP raw command strings
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.open(@host) do |snp|
+      snp.request("type=SNP#?version=1.1#?action=register#?app=Ruby-Snarl\r\n")
+      snp.request("type=SNP#?version=1.1#?action=add_class#?app=Ruby-Snarl#?class=type1\r\n")
+      snp.request("type=SNP#?version=1.1#?action=add_class#?app=Ruby-Snarl#?class=type2\r\n")
+      snp.request("type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type1#?title=title#?text=type1 text!#?timeout=10\r\n")
+      snp.request("type=SNP#?version=1.1#?action=notification#?app=Ruby-Snarl#?class=type2#?title=title#?text=type2 text!#?timeout=10\r\n")
+    end
+    # if you wish
+    # Snarl::SNP.new(@host).request("type=SNP#?version=1.1#?action=unregister#?app=Ruby-Snarl\r\n")
+
+本来の SNP のコマンドを直接送ります。デバッグ用途などお好みで。Fatal なエラーはふつうに例外になります。
+終端の \r\n は必須です。自動で付加することはありません。本文に \r が入っていると Snarl がそこでコマンド文字列を切ってしまうので改行は \n だけにしてください。なお、notification などでは内部処理されて取り除かれています。
+
+=== Multibyte Popup
+
+    require 'rubygems'
+    require 'snarl/snp'
+    require 'kconv'
+    Snarl::SNP.message(@host, 'タイトル'.tosjis, '日本語'.tosjis)
+
+対象の Snarl が動作している Windows で使用されているエンコーディングに変換して文字列を送ってください。
+
+== FAQ
+
+=== autotest または autospec がポップアップを出さずに普通に終了してしまう
+
+Snarl::SNP が接続できなくてエラーを返しているのだと思われます。
+ホームディレクトリなどにある .autotest ファイルに Autotest::Snarl.host = '192.168.0.2' などと書いてください。
+
+  require 'snarl/autotest'
+  Autotest::Snarl.host = '192.168.0.2'
+
+autotest コマンドを環境変数 SNARL_HOST つきで起動しても構いません。Linux 上の bash だと
+
+  SNARL_HOST=192.168.0.1 autotest
+
+などとすることでうまくいきます。
+
+=== Snarl::SNP.show_message で日本語が化ける
+
+化ける場合は SNP か Snarl の仕様かもしれません。適当に register してから notification(title, text) を使ってください。
+app コマンドの指定がない notification アクションはなぜか日本語が化けます。
+事前に register されている場合、メッセージが ascii 文字だけの場合は問題ありません。
+
+show_message のウリは「Snarlの設定ファイルを汚さない匿名アプリケーションメッセージ」ですが、無論 register してしまうと Snarl に記録されます。
+引数なしで register とだけ書くとデフォルトの Snarl::SNP::DEFAULT_APP が使用されますので、アプリケーション名をいちいち考えるのが煩雑な雑多なメッセージの場合はこれで代用するとやや簡便です。
+
+  Snarl::SNP.open(@host) do |snp|
+    snp.register
+    snp.notification('ごはんが炊けたよ')
+  end
+
+=== SNP.open はいつ TCP ソケットを使用している？
+
+SNP コマンドを送る瞬間だけ TCPSocket.open(@host, @port){|s| s.write(cmdstr)} してます。
+ブロックつき open なのに、効率とかなにそれって感じでいちいちセッション切ってます。
