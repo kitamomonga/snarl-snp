@@ -126,7 +126,7 @@ Snarl の設定画面では「Ruby-Snarl の中のクラス type1」という区
     require 'rubygems'
     require 'snarl/snp'
     require 'kconv'
-    Snarl::SNP.message(@host, 'タイトル'.tosjis, '日本語'.tosjis)
+    Snarl::SNP.open(@host){|snp| snp.notification('タイトル'.tosjis, '日本語'.tosjis)}
 
 対象の Snarl が動作している Windows で使用されているエンコーディングに変換して文字列を送ってください。
 
