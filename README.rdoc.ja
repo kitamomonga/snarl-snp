@@ -2,7 +2,7 @@
 
 = Snarl-SNP
 
-snarl/snp（ruby-snarl-snp）は、Snarl を LAN 越しに操作するための SNP プロトコルクライアントを提供します。
+snarl/snp（snarl-snp）は、Snarl を LAN 越しに操作するための SNP プロトコルクライアントを提供します。
 Ruby スクリプトの結果（の30字くらい）を Snarl に送ることができます。
 
 Snarl は Windows で動作する、Growl っぽい通知ポップアップを行うソフトウェアです。

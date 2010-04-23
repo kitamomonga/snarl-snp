@@ -8,7 +8,7 @@ require 'snarl/snp'
 # http://www.geocities.jp/nanasiya3/ext.html#WA-GEN-RUNNER
 #
 # "File Runner" Command: "fullpath_rubyw_with_quote"
-# "File Runner" Parameter: "fullpath_winamp_nowplay.rb_with_quote" quoted_params
+# "File Runner" Parameter: "fullpath_winamp_nowplaying.rb_with_quote" quoted_params
 # quoted_params => "%artist%||%album%||%title%||%tracknumber%||%year%||%genre%||%comment%||%filename%||%index%||icon=>:album"
 # or
 # quoted_params => "%artist%||%album%||%title%||%tracknumber%||%year%||%genre%||%comment%||%filename%||%index%||icon=>c:\icon.jpg"
@@ -219,7 +219,7 @@ if $0 == __FILE__ then
 
     ## logger for SNP log output
     # require 'logger'
-    # output_file = File.join(ENV['HOME'], 'snarl_winamp_log_for_rubyw.txt')
+    # output_file = File.join(ENV['HOME'], 'winamp_nowplaying_log_for_rubyw.txt')
     # amp.logger = Logger.new(output_file)
 
     amp.show_message

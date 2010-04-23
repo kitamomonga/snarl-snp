@@ -4,12 +4,12 @@
 # -*- encoding: utf-8 -*-
 
 Gem::Specification.new do |s|
-  s.name = %q{ruby-snarl-snp}
-  s.version = "0.1.0"
+  s.name = %q{snarl-snp}
+  s.version = "0.1.1"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["kitamomonga"]
-  s.date = %q{2010-04-22}
+  s.date = %q{2010-04-23}
   s.description = %q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP over LAN.}
   s.email = %q{ezookojo@gmail.com}
   s.extra_rdoc_files = [
@@ -17,14 +17,14 @@ Gem::Specification.new do |s|
      "README.rdoc.ja"
   ]
   s.files = [
-    "HOWTO.rdoc.ja",
+    "GUIDE.rdoc.ja",
      "MIT-LICENSE",
      "README.rdoc",
      "README.rdoc.ja",
      "Rakefile",
      "VERSION",
      "exsample/ping.rb",
-     "exsample/snarl_winamp.rb",
+     "exsample/winamp_nowplaying.rb",
      "exsample/yahoo_weather.rb",
      "lib/snarl/autotest.rb",
      "lib/snarl/snp.rb",
@@ -34,7 +34,7 @@ Gem::Specification.new do |s|
      "lib/snarl/snp/request.rb",
      "lib/snarl/snp/response.rb",
      "lib/snarl/snp/snp.rb",
-     "ruby-snarl-snp.gemspec",
+     "snarl-snp.gemspec",
      "spec/exsample/data/weather_yahoo_co_jp.html",
      "spec/exsample/yahoo_weather_spec.rb",
      "spec/snp/action_spec.rb",
@@ -44,14 +44,13 @@ Gem::Specification.new do |s|
      "spec/snp/snp_spec.rb",
      "spec/spec_helper.rb"
   ]
-  s.homepage = %q{http://github.com/kitamomonga/ruby-snarl-snp}
+  s.homepage = %q{http://github.com/kitamomonga/snarl-snp}
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Snarl Network Protocol Client. You can notify Snarl over LAN.}
+  s.summary = %q{Snarl Network Protocol Client. You can notify to Snarl over LAN.}
   s.test_files = [
     "spec/exsample/yahoo_weather_spec.rb",
-     "spec/exsample/snarl_winamp_spec.rb",
      "spec/spec_helper.rb",
      "spec/snp/config_spec.rb",
      "spec/snp/response_sprc.rb",
