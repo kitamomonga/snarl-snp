@@ -1,13 +1,13 @@
 = snarl-snp
 
-Snarl Network Protocol(SNP) Client for Snarl. You can send messages to Snarl over LAN.
+Snarl Network Protocol(SNP) Client for Snarl. You can send messages to Snarl on LAN.
 
 Snarl is a popup-message application on Windows. Alike Growl.
 http://www.fullphat.net/
 SNP 1.0 documentation is here.
 http://www.fullphat.net/dev/snp/index.htm
 
-If you are able to read Japanese, please read README.rdoc.ja.
+If you are able to read Japanese, please read doc-ja/README.rdoc.ja.
 
 == Requirements
 
@@ -17,7 +17,7 @@ If you are able to read Japanese, please read README.rdoc.ja.
 
   gem install snarl-snp
 
-No other gems are required (only to test, WebMock is needed).
+No other gems are required.
 
 == Contact
 
@@ -32,6 +32,65 @@ Set the value in advance, then copy and paste codes on irb.
   @host = '192.168.0.2' # Snarl machine host
 
 When nil/undef, Snarl::SNP uses '127.0.0.1'. Default port is 9887.
+
+=== SNP with YAML
+
+0.2.0 feature. It maybe seems to be easy.
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.load(<<YAML)
+    host       : #{@host}
+    app        : Ruby-Snarl
+    title      : popup title
+    text       : hello!
+    timeout    : 5
+    unregister : false
+    YAML
+
+    require 'rubygems'
+    require 'snarl/snp'
+    yaml = <<YAML
+    host  : #{@host}
+    app   : Ruby-Snarl
+    class :
+       - [class1, name1]
+       - [class2, name2]
+    YAML
+    Snarl::SNP.load(yaml) do |snp|
+      snp.notification(:title => 'title', :text => 'text', :class => 'class1')
+    end
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.load(<<YAML)
+    host  : #{@host}
+    app   : Ruby-Snarl
+    class :
+       - [class1, name1]
+       - [class2, name2]
+    notification :
+       title : title
+       text  : text
+       class : class1
+    logfile : $stdout
+    YAML
+
+    require 'rubygems'
+    require 'snarl/snp'
+    Snarl::SNP.load(<<YAML)
+    host  : #{@host}
+    app   : Ruby-Snarl
+    notification :
+      -
+       title : 1st post!
+       text  : message1
+      -
+       title : 2nd post!
+       text  : message2
+    YAML
+
+For YAML details, see YAML.rdoc.
 
 === Simple Popup (anonymous application)
 
@@ -120,7 +179,30 @@ Don't use "\r\n" or "\r" in message body. Use "\n" instead.
     require 'kconv'
     Snarl::SNP.open(@host){|snp| snp.notification('タイトル'.tosjis, '日本語'.tosjis)}
 
-Windows encoding is required.
+Windows encoding is required. Windows 2000 is Shift_JIS (CP932), XP is UTF-8, maybe.
+
+== SNP on command line
+
+bin/snarl_snp is available.
+
+    snarl_snp -H host -a app -t title -m message
+
+    snarl_snp --yaml=./snp.yml
+
+and so on.
+
+[-H host, --host=host] the hostname/address which Snarl is running (default, 127.0.0.1). -h shows help. "H"ost. Sorry.
+[-p port, --port=port] the port number which Snarl uses (default, 9887)
+[-a app, --app=app] the application name you use on Snarl (default, nothing). It's read in SNP#register(app)
+[-c class, --class=class] the classname you use on Snarl (default, nothing). It's read in SNP#add_class and notification
+[-t title, --title=title] the title string of popup (default 'Ruby-Snarl').
+[-m msg, --text=msg] the popup message body.
+[-s sec, --timeout=sec] popups automatically close in sec (default 10 sec.). -t is not for timeout but title.
+[--icon=icon_path] popup message icon path (default, default style's icon). URL or filepath on Snarl machine. JPG/PNG/GIF
+[--sticky] makes popup "sticky" (default, closes in timeout sec). this is equal to "--timeout=0".
+[-u, --unregister] removes app from Snarl setting window (default, false). note: users cannot change app's setting.
+[--verbose] shows SNP logs to stdout (default, false)
+[-y yamlpath, --yaml=yamlpath] the YAML file path for "automatic SNP" (default, nothing)
 
 == FAQ
 

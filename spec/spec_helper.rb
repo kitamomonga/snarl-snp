@@ -9,12 +9,14 @@ Spec::Runner.configure do |config|
   require 'logger'
   require 'tempfile'
   require 'yaml'
+  yaml_host = nil
+  yaml_port = nil
   begin
     config = YAML.load_file(File.join(File.dirname(__FILE__), 'snp.config'))
+    yaml_host = config['host'] if config['host']
+    yaml_port = config['port'] if config['port']
   rescue Errno::ENOENT
-    config = {}
   end
-  config.each_pair do |mes, value|
-    Snarl::SNP::Config.__send__("#{mes}=", value)
-  end
+  SNARL_HOST = ENV['SNARL_HOST'] || yaml_host || '127.0.0.1'
+  SNARL_PORT = (ENV['SNARL_PORT'] || yaml_port || 9887).to_i
 end

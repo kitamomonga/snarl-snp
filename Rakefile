@@ -5,13 +5,12 @@ begin
   require 'jeweler'
   Jeweler::Tasks.new do |gem|
     gem.name = "snarl-snp"
-    gem.summary = %Q{Snarl Network Protocol Client. You can notify to Snarl over LAN.}
-    gem.description = %Q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP over LAN.}
+    gem.summary = %Q{Snarl Network Protocol Client. You can notify to Snarl on LAN.}
+    gem.description = %Q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP on LAN.}
     gem.email = "ezookojo@gmail.com"
     gem.homepage = "http://github.com/kitamomonga/snarl-snp"
     gem.authors = ["kitamomonga"]
     gem.add_development_dependency "rspec", ">= 1.2.9"
-    gem.add_development_dependency "webmock"
     # gem is a Gem::Specification... see http://www.rubygems.org/read/chapter/20 for additional settings
   end
   Jeweler::GemcutterTasks.new
@@ -43,5 +42,7 @@ Rake::RDocTask.new do |rdoc|
   rdoc.title = "snarl-snp #{version}"
   rdoc.rdoc_files.include('README.rdoc*')
   rdoc.rdoc_files.include('GUIDE.rdoc*')
+  rdoc.rdoc_files.include('YAML.rdoc*')
   rdoc.rdoc_files.include('lib/**/*.rb')
+  rdoc.rdoc_files.include('doc-ja/**/*rdoc.ja')
 end

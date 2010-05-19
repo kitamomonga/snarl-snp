@@ -1,0 +1,197 @@
+= YAML for Snarl::SNP.load(yaml)
+
+NOTE: YAML is linehead-space-sensitive. When you run samples, remove 4 white spaces from each line head.
+
+- Values from YAML are always overwriten by Snarl::SNP methods' arguments.
+
+    snp = Snarl::SNP.load(<<YAML)
+    title : yaml title!
+    YAML
+    snp.notification(:title => 'new title') #=> "new title"
+
+- nil value / empty value / undef key are considerd as 'it is not set on yaml'.
+
+    - class : nil
+    - class : []
+    (there is no 'class')
+
+== text and title
+
+If
+- there is "text : ..." field or "title : ..." field
+and
+- there is no "notification : ..." field,
+Snarl::SNP.load(yaml) makes notification massage with "text :", "title :", "timeout :", "icon :" and "class :".
+
+=== host
+
+    host : 192.168.0.2
+
+The hostname/address of Snarl Machine. (This is used as TCPSocket.open(host)).
+If nothing is set on yaml and methods arguments, last 'host' value is 127.0.0.1.
+
+=== port
+
+    port : 9887
+
+The port number which Snarl uses. 9887. (This is used as TCPSocket.open(host, port)).
+If nothing is set on yaml and methods arguments, last 'port' value is 9887.
+
+=== app, name, register
+
+    app : Ruby-Snarl
+
+The application name. This is shown on Snarl setting window. (This is used as Snarl::SNP#register(app))
+If nothing is set on yaml and methods arguments, last 'app' value is nil. "anonymous application message".
+
+=== class, add_class
+
+    class :
+      - [classname1, classtitle1]
+      - [classname2, classtitle2]
+
+The classname and classtitle alias.
+The classname is used for classifing your message.
+The classtitle is shown on Snarl setting window(it is optional. if nil, classname is shown).
+(This is used as SNP#add_class(classname1, classtitle1) and SNP#notification(:text => text, :class => classname1))
+If nothing is set on yaml and methods arguments, last 'class' value is nil. "anonymous class message".
+
+    class : classname1
+
+    class : [classname1, classname2, classname3]
+
+    class :
+      - [classname1, classtitle1]
+or
+    class : [[classname1, classtitle1]]
+
+=== title
+
+    title : message title
+
+The title of popup messages.
+If there is no "notification : ..." field, SNP#notification makes message with this value as title.
+When "notification : ..." has no 'title' key, SNP#notification uses this value as notification title.
+If nothing is set on yaml and methods arguments, last 'title' value is Ruby-Snarl.
+
+=== text, message
+
+    text : hello, Ruby!
+
+The body of popup messages.
+If there is no "notification : ..." field, SNP#notification makes message with this value as body text.
+When "notification : ..." has no 'text' key, SNP#notification uses this value as notification body.
+If nothing is set on yaml and methods arguments, last 'body' value is nil. empty body message.
+
+=== timeout, sec
+
+    timeout : 30
+
+The "timeout" seconds of popups. After this seconds, popups are automatically closed.
+If SNP#notification makes message for lack of "notification : ..." field, SNP#notification uses this value as timeout.
+When "notification : ..." has no 'timeout' key, SNP#notification uses this value as notification timeout.
+"timeout : 0" makes popups "sticky". popups never close by time.
+If nothing is set on yaml and methods arguments, last 'timeout' value is 10.
+
+=== sticky
+
+    sticky : true
+
+makes popups "sticky". It is same to "timeout : 0". It is mainly for snarl_snp command. Do not use.
+If nothing is set on yaml, sticky is false.
+
+=== icon
+
+    icon : http://exsample.com/good.png
+
+The icon path of popups. The popup has this images as icon.
+If SNP#notification makes message for lack of "notification : ..." field, SNP#notification uses this value as icon.
+When "notification : ..." has no 'icon' key, SNP#notification uses this value as notification icon.
+
+The value is URL or filepath. The filepath should be accessable an absolute/relative path on Snarl machine.
+Image types are Jpeg, PNG, GIF, and so on.
+If nothing is set on yaml and methods arguments, last 'icon' value is nil. The icon will be a style's default icon.
+
+=== notification
+
+    notifitation : [title, text, icon.jpg, 9, classname]
+or
+    notifitation :
+      title   : title
+      text    : text
+      icon    : icon.jpg
+      timeout :  9
+      class   : classname
+or
+    notifitation :
+      -
+        title : 1st message
+        text  : one
+      -
+        title : 2nd message
+        text  : two
+      - { title : 3rd message, title : three }
+
+The popup messages. This is for Snarl::SNP#notification(params). params is Array or Hash above.
+
+If notification field has no key of 'title', 'text', 'icon', 'timeout', and top fields has same name one, SNP#notification uses top fields' value as its arguments.
+
+    # actually same message
+    notifitation :
+      title   : title
+      text    : text
+      timeout :  9
+
+    title   : title
+    timeout :  9
+    notifitation :
+      text    : text
+
+If there is no "notifitation : " field (and no "title : " and "text :" field), Snarl::SNP.load(yaml) sends no notifitation message.
+
+=== unregister
+
+    unregister : true
+
+removes application from Snarl setting window.
+If true, application is removed from Snarl settings after closing Snarl::SNP.load(yaml){...} block,
+and users are not able to change application settings.
+
+=== logfile
+
+    logfile : $stdout
+
+SNP logs are put to this path's file. Logger.new(logfile).
+YAML value is always String, but '$stdout' and '$stderr' are treated as Ruby's $stdout IO and $stderr IO.
+If you set "logfile : $stdout", SNP logs are printed to standard output.
+If you set "logfile : $stderr", SNP logs are printed to standard error.
+
+If nothing is set on yaml and methods arguments, last 'logfile' value is nil. No log messages are printed.
+
+=== loglevel
+
+    loglevel : INFO
+
+The loglevel for logger output. "logfile : " field is required. (or, SNP.load(yaml, logger) is also ok)
+The values are DEBUG, INFO, WARN, ERROR, FATAL (they are not case-sensitive) or 0, 1, 2, 3, 4.
+
+ERROR (or 3) :: Snarl error, TCPSocket connection fail
+INFO (or 1)  :: ERROR, and SNP response code
+DEBUG (or 0) :: INFO, and sent string to Snarl
+
+If loglevel is nil/unset (and there is any logger), loglevel is DEBUG. All logs are printed.
+
+=== iconset
+
+    iconset :
+      ok   : ./green.jpg
+      fail : ./red.jpg
+    notification :
+      title : Good!
+      text  : no errors.
+      icon  : ok
+
+The icons for notification.
+It works as "icon : ./green.jpg", and
+     snp.notification(:title => title, :text => text, :icon => iconset['ok'])
+.

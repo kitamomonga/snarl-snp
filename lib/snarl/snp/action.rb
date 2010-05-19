@@ -13,9 +13,10 @@ class Snarl
       #
       # Snarl sends back a casual error when +app+ is already registered.
       # It is treated as SNP::SNPError::Casual::SNP_ERROR_ALREADY_REGISTERED.
-      def register(app=nil)
-        @app = app
-        cmds = {:action => 'register', :app => app}
+      def register(app = nil)
+        # when self['app'] == nil/unset and register(nil), SNARL receives SNP_ERROR_BAD_PACKET
+        self['app'] = app if app
+        cmds = {:action => 'register', :app => self['app']}
         request(Request.new(cmds))
       end
       alias :app= :register
@@ -33,8 +34,8 @@ class Snarl
       def add_class(classid, classtitle=nil)
         # TODO: add_class(app=nil, classid, classtitle=nil)
         # type=SNP#?version=1.0#?action=add_class#?class=t returns (107) Bad Packet
-        raise "#{self}#register(appname) required before add_class" unless @app
-        cmds = {:action => 'add_class', :app => @app, :class => classid.to_s, :title => classtitle}
+        raise "registering is required. #{self}#register(appname)  before #add_class" unless self['app']
+        cmds = {:action => 'add_class', :app => self['app'], :class => classid.to_s, :title => classtitle}
         request(Request.new(cmds))
       end
 
@@ -66,7 +67,7 @@ class Snarl
       # Snarl sends back a casual error when +app+ is not registered.
       # It is treated as SNP::SNPError::Casual::SNP_ERROR_NOT_REGISTERED.
       def unregister(app=nil)
-        app = app || @app
+        app = app || self['app']
         raise "#{self}#unregister requires appname." unless app
         cmds = {:action => 'unregister', :app => app}
         request(Request.new(cmds))
@@ -126,11 +127,14 @@ class Snarl
           res[command] =  keyhash_value if keyhash_value
         end
         res[:action]  = 'notification'
-        res[:app]     = @app if (res[:app].nil? && @app) # default notification
-        res[:app]     = nil if res[:app] == :anonymous # from snp.show_message
-        res[:title]   = (@title || DEFAULT_TITLE) unless res[:title]
-        res[:timeout] = (@timeout || DEFAULT_TIMEOUT) unless res[:timeout]
-        res[:icon]    = icon(res[:icon]) if res[:icon]
+        res[:app]     = self['app'] if (res[:app].nil? && self['app']) # default notification
+        res[:title]   = (res[:title] || self['title'] || DEFAULT_TITLE)
+        res[:timeout] = (res[:timeout] || self['timeout'] || DEFAULT_TIMEOUT)
+        if res[:icon] then
+          res[:icon] = icon(res[:icon])
+        elsif self['icon'] then
+          res[:icon] = self['icon']
+        end
         return res
       end
     end

@@ -1,0 +1,200 @@
+== YAML for Snarl::SNP.load(yaml)
+
+yaml で指定された値は、Snarl::SNP の各メソッドの引数で上書きすることができます。
+yaml で（キーごと）何も指定しなかった場合、nil という文字列、空の配列 [] を値に指定した場合は yaml としての初期値はないものとして扱います。
+
+    # クラスは指定しませんの図
+    - class : nil
+    - class : []
+    ('- class' 自体を書かない )
+
+yaml で指定しなかった場合に動作がどうなるかは、Snarl::SNP の通常のメソッド引数と初期値に依ります。
+
+なお、YAML は行頭の空白に意味を持たせているので、コピペには注意してください。
+RDoc の制限でこのドキュメントの記述の先頭に空白4つが置かれていますが、これを入力してはいけません。
+
+    class :
+      - [classname1, classtitle1]
+      - [classname2, classtitle2]
+
+は実際には、Rdoc で表現できませんが、「class:」「  - [classname1, classtitle1]」「  - [classname2, classtitle2]」の3行で構成されています。インデントは後ろ2行のみです。
+
+=== host
+
+    host : 192.168.0.2
+
+Snarl の動作している Windows マシンのホスト名またはIPアドレスを指定します。TCPSocket.open が解釈できるならなんでも構いません。
+yaml でもメソッド引数でも無指定だった時の最終的なデフォルト値は 127.0.0.1 です。
+
+=== port
+
+    port : 9887
+
+Snarl が待ち受けているポート番号を指定します。通常は 9887 です。文字列は内部で整数に変換されます。
+yaml でもメソッド引数でも無指定だった時の最終的なデフォルト値は 9887 です。
+
+=== app, name, register
+
+    app : Ruby-Snarl
+
+Snarl に登録するアプリケーション名を指定します。SNP#register に渡され、SNP#add_class や SNP#notification で使用されます。
+yaml でもメソッド引数でも無指定だった時の最終的なデフォルト値は nil で、いわゆる anonymous-app なメッセージとなります。
+
+=== class, add_class
+
+    class :
+      - [classname1, classtitle1]
+      - [classname2, classtitle2]
+
+Snarl に登録するクラス名を指定します。SNP#add_class に渡され、SNP#notification で引数に使用することができます。
+yaml でもメソッド引数でも無指定だった時の最終的なデフォルト値は nil で、クラス名登録は行われません。
+
+登録したいクラスがひとつで、Snarlの設定欄での表示用別名が必要ない場合は文字列ひとつでも動作します。
+
+    class : classname1
+
+表示用別名が必要なくて、クラス名を複数指定したい場合はクラス名の配列を渡します。
+
+    class : [classname1, classname2, classname3]
+
+表示用別名が必要な場合、[クラス名, 別名] という「要素2の配列」を登録したいぶんだけ持った配列を指定します。
+
+    class :
+      - [classname1, classtitle1]
+or
+    class : [[classname1, classtitle1]]
+
+"class : [classname1, classtitle1]" と書くと classtitle1 が2番目のクラス名として解釈されてしまうので、必ず配列の配列になるように書いてください。
+
+=== title
+
+    title : message title
+
+message 項を1回送信した際にポップアップで表示されるメッセージタイトルを指定します。
+notification 項が存在しなかったときに、SNP#notification で使用されます。notification 項に title 項が含まれていなかった場合にも使用されます。
+YAML からのメッセージの送信には、なるべく notification 項を使ってください。
+日本語でも動作します。UTF-8 が動作するはずですが、Snarl が動作している Windows が Windows2000 の場合は Shift_JIS とかの文字列を指定します。変換は行わないので、YAML ファイルの時点で該当エンコーディングにしておいてください。
+yaml でもメソッド引数でも無指定だった時は、Ruby-Snarl という文字列になります。
+
+=== text, message
+
+    text : 日本語があるときはyamlファイル自体をShift_JISかUTF-8にしてね！
+
+message 項を1回送信した際にポップアップで表示されるメッセージ本文を指定します。
+notification 項が存在しなかったときに、SNP#notification で使用されます。notification 項に text 項が含まれていなかった場合にも使用されます。
+YAML からのメッセージの送信には、なるべく notification 項を使ってください。
+日本語でも動作します（改行は内部で "\n" に置換）。UTF-8 が動作するはずですが、Snarl が動作している Windows が Windows2000 の場合は Shift_JIS とかの文字列を指定します。変換は行わないので、YAML ファイルの時点で該当エンコーディングにしておいてください。
+Snarl 本体での本文の長さの制限は2048文字です。2048バイトではなく、2048文字です。
+yaml でもメソッド引数でも無指定だった時は、空っぽのメッセージ本文が送られます。
+
+=== timeout, sec
+
+    timeout : 30
+
+表示されるポップアップが、何秒後に自動で消えるかを整数文字列で指定します。
+notification 項が存在しなかったときに、SNP#notification で使用されます。notification 項に timeout 項が含まれていなかった場合にも使用されます。
+Snarl 本体の個々のアプリケーションへの設定（Apps）で Duration が AppDecides か Default だったときに有効です。
+0 を指定した場合はクリックされるまで消えません。
+yaml でもメソッド引数でも無指定だった時は、10 秒でメッセージが消えます。
+
+=== sticky
+
+    sticky : true
+
+表示されるポップアップを、クリックされるまで消えないようにします。
+snarl_snp コマンドの関係で残ってます。 timeout : 0 という記述に同じです。notification 項では sticky は無効です。
+yaml でもメソッド引数でも無指定だった時は、false になります。timeout の秒数によります。
+
+=== icon
+
+    icon : http://exsample.com/good.png
+
+ポップアップに表示されるアイコン画像のパスを指定します。
+notification 項が存在しなかったときに、SNP#notification で使用されます。notification 項に icon 項が含まれていなかった場合にも使用されます。
+URL が指定された場合は Snarl 本体がアクセスして使用します。絶対ファイルパスだった場合は Snarl が動作しているマシンのそのファイルを、相対パスを指定された場合は、たぶん Snarl が動作しているカレントディレクトリからの位置から計算された場所のファイルをアイコンとして使用するんじゃないかと思われます。
+幅の大きな画像は Snarl が自動で縮小します。対応フォーマットは Jpeg や GIF や PNG などのようです。
+（Snarl 本体でのスタイル指定にもよりますが）適当な存在しないパスを指定すると、アイコンだけが抜けたポップアップになります。
+yaml でもメソッド引数でも無指定だった時は、Snarl 本体でメッセージ表示に指定されているスタイルのデフォルトになります。
+
+=== notification
+
+    notifitation : [title, text, icon.jpg, 9, classname]
+or
+    notifitation :
+      title   : title
+      text    : text
+      icon    : icon.jpg
+      timeout :  9
+      class   : classname
+or
+    notifitation :
+      -
+        title : 1st message
+        text  : one
+      -
+        title : 2nd message
+        text  : two
+      - { title : 3rd message, title : three }
+
+送信するポップアップメッセージの設定を行います。Snarl::SNP#notifitation にそのまま渡されます。
+notifitation 項に title 小項がなかった場合、外部の単体の title 項が、icon 小項、timeout 小項が無かった場合もそれぞれ外部の同項が参照されます。
+
+    # 結果的に一緒
+    notifitation :
+      title   : title
+      text    : text
+      timeout :  9
+
+    timeout :  9
+    notifitation :
+      title   : title
+      text    : text
+
+[タイトル, 本文, アイコン, タイムアウト秒, クラス名] の配列か、title、text、icon、timeout、class をキーとした Hash になるように記述してください。
+不要なものは nil を指定するか、Hash の場合は記述しないでおきます。
+配列の場合は [タイトル, 本文] と [本文] という略記が動作可能です。
+yaml でもメソッド引数でも無指定だった時は、notifitation 自体を行いません。
+
+=== unregister
+
+    unregister : true
+
+一連の送信動作の最後に Snarl::SNP#unregister を行うかどうかを設定します。
+true を指定した場合、Snarl の設定画面から app 項で設定したアプリケーションが削除されます。
+ユーザーがスタイル設定などを行えなくなるので、使用には注意をしてください（通常、unregister を毎回行う必要はありません）。
+yaml でもメソッド引数でも無指定や false だった時は、unregister を行いません。
+
+=== logfile
+
+    logfile : $stdout
+
+通信ログの出力先のファイルパスを指定します。
+$stdout や $stderr という文字列を指定すると、Ruby の $stdout（標準出力）や $stderr（標準エラー出力）に出力するようになります。
+出力フォーマットは Logger ライブラリの標準です。これを yaml から変えることは今はできません。Ruby スクリプトを書いてください。
+load メソッドの第2引数で Logger オブジェクトが指定されたときは、Loggerオブジェクトの設定「で」上書きされてしまいます。
+yaml でもメソッド引数でも無指定だった時は、ログ出力を行いません。
+
+=== loglevel
+
+    loglevel : INFO
+
+通信ログの出力レベルを指定します。必ず logfile 項でログ出力先を設定してください。
+DEBUG、INFO、WARN、ERROR、FATAL の文字列（大文字小文字問わず）か整数文字列 0、1、2、3、4 で指定します。
+ERROR の場合は通信エラーや Snarl 本体絡みでのエラーが、INFO の場合はさらにレスポンスコード（とverbose項が有効なときには無視エラー）が、DEBUG の場合はさらに送信文字列が出力されます。WARN と FATAL に相当するログは今のところありません。
+yaml でもメソッド引数でも無指定だった（そして logfile 項がある）時は、DEBUG とみなしてすべてのログ出力を行います。
+
+=== iconset
+
+    iconset :
+      ok   : ./green.jpg
+      fail : ./red.jpg
+    notification :
+      title : Good!
+      text  : no errors.
+      icon  : ok
+
+notification の icon 小項で指定するアイコンのペアを指定します。
+上記の例は "icon : ./green.jpg" と直に書いたのと同じことで、処理としては
+     snp.notification(:title => title, :text => text, :icon => iconset['ok'])
+です。
+スクリプト上で Hash を書かなくていいあたりにちょっぴりメリットがあります。

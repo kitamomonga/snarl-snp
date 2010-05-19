@@ -31,6 +31,7 @@ class Snarl
       def inspect ; @response.chomp ; end # p response #=> "SNP/1.1/0/OK/456"
 
       def ok? ; code.to_i.zero? ; end
+      def request_str ; request ? request.to_s : nil ; end
     end
   end
 end

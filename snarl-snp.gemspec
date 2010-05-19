@@ -5,42 +5,49 @@
 
 Gem::Specification.new do |s|
   s.name = %q{snarl-snp}
-  s.version = "0.1.1"
+  s.version = "0.1.9"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["kitamomonga"]
-  s.date = %q{2010-04-23}
-  s.description = %q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP over LAN.}
+  s.date = %q{2010-05-19}
+  s.default_executable = %q{snarl_snp}
+  s.description = %q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP on LAN.}
   s.email = %q{ezookojo@gmail.com}
+  s.executables = ["snarl_snp"]
   s.extra_rdoc_files = [
-    "README.rdoc",
-     "README.rdoc.ja"
+    "README.rdoc"
   ]
   s.files = [
-    "GUIDE.rdoc.ja",
-     "MIT-LICENSE",
+    "MIT-LICENSE",
      "README.rdoc",
-     "README.rdoc.ja",
      "Rakefile",
      "VERSION",
+     "YAML.rdoc",
+     "bin/snarl_snp",
+     "doc-ja/GUIDE.rdoc.ja",
+     "doc-ja/README.rdoc.ja",
+     "doc-ja/YAML.rdoc.ja",
      "exsample/ping.rb",
      "exsample/winamp_nowplaying.rb",
      "exsample/yahoo_weather.rb",
      "lib/snarl/autotest.rb",
      "lib/snarl/snp.rb",
      "lib/snarl/snp/action.rb",
+     "lib/snarl/snp/autosnp.rb",
      "lib/snarl/snp/config.rb",
      "lib/snarl/snp/error.rb",
      "lib/snarl/snp/request.rb",
      "lib/snarl/snp/response.rb",
      "lib/snarl/snp/snp.rb",
+     "lib/snarl/snp/snp_procedure.rb",
      "snarl-snp.gemspec",
-     "spec/exsample/data/weather_yahoo_co_jp.html",
-     "spec/exsample/yahoo_weather_spec.rb",
+     "spec/bin/snarl_snp_spec.rb",
      "spec/snp/action_spec.rb",
      "spec/snp/config_spec.rb",
+     "spec/snp/real_connection_spec.rb",
      "spec/snp/request_spec.rb",
      "spec/snp/response_sprc.rb",
+     "spec/snp/snp_procedure_spec.rb",
      "spec/snp/snp_spec.rb",
      "spec/spec_helper.rb"
   ]
@@ -48,12 +55,14 @@ Gem::Specification.new do |s|
   s.rdoc_options = ["--charset=UTF-8"]
   s.require_paths = ["lib"]
   s.rubygems_version = %q{1.3.6}
-  s.summary = %q{Snarl Network Protocol Client. You can notify to Snarl over LAN.}
+  s.summary = %q{Snarl Network Protocol Client. You can notify to Snarl on LAN.}
   s.test_files = [
-    "spec/exsample/yahoo_weather_spec.rb",
+    "spec/bin/snarl_snp_spec.rb",
      "spec/spec_helper.rb",
      "spec/snp/config_spec.rb",
      "spec/snp/response_sprc.rb",
+     "spec/snp/snp_procedure_spec.rb",
+     "spec/snp/real_connection_spec.rb",
      "spec/snp/request_spec.rb",
      "spec/snp/snp_spec.rb",
      "spec/snp/action_spec.rb"
@@ -65,14 +74,11 @@ Gem::Specification.new do |s|
 
     if Gem::Version.new(Gem::RubyGemsVersion) >= Gem::Version.new('1.2.0') then
       s.add_development_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_development_dependency(%q<webmock>, [">= 0"])
     else
       s.add_dependency(%q<rspec>, [">= 1.2.9"])
-      s.add_dependency(%q<webmock>, [">= 0"])
     end
   else
     s.add_dependency(%q<rspec>, [">= 1.2.9"])
-    s.add_dependency(%q<webmock>, [">= 0"])
   end
 end
 

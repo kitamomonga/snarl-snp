@@ -6,7 +6,17 @@ $LOAD_PATH.unshift(File.join(File.dirname(File.expand_path(__FILE__)), '/../lib/
 require 'snarl/snp'
 
 @uri = 'http://weather.yahoo.co.jp/weather/jp/1b/1400.html'
-@host = ENV['SNARL_HOST'] || ARGV[0] || (if ARGV[0] == '-H' then ARGV[1] else nil end)
+@host = ARGV[0] || (if ARGV[0] == '-H' then ARGV[1] else nil end)
+@config = <<YAML
+host : #{@host}
+app  : Ruby-Snarl
+class :
+    - [yahoo_weather, "Yahoo! Japan Weather"]
+unregister : false
+notification:
+  default_class : yahoo_weather
+  default_timeout : 20
+YAML
 
 def encode_win(s)
   if s.respond_to?(:encode) then
@@ -29,7 +39,11 @@ title = encode_win("Yahoo! Weather\n#{place}")
 text = encode_win(table.at('table').inner_text.gsub(/\s+/){''})
 icon = weather['src']
 
-Snarl::SNP.open(@host) do |snp|
-  snp.register('Ruby-Snarl')
-  snp.notification(title, text, icon, 20)
+Snarl::SNP.load(@config) do |snp|
+  snp.notification(title, text, icon, 20, 'yahoo_weather')
 end
+
+# Snarl::SNP.open(@host) do |snp|
+#   snp.register('Ruby-Snarl')
+#   snp.notification(title, text, icon, 20)
+# end

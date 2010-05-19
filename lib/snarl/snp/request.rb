@@ -23,60 +23,70 @@ class Snarl
       # make SNP request string from command hash and is Request object.
       def initialize(cmd_hash={})
         @commands = {}.update(cmd_hash)
+        normalize unless @commands.empty?
       end
 
       attr_reader :commands
 
       # Adds command key and value to Request
-      def []=(cmdkey, value) ; @commands[cmdkey] = value ; end # TODO: normalize
+      def []=(cmdkey, value)
+        norm_cmdkey = normalize_cmdkey(cmdkey)
+        if norm_cmdkey == 'action' then
+          @commands['action'] = normalize_action_value(value)
+        else
+          @commands[norm_cmdkey] = normalize_value(value)
+        end
+      end
       # Returns command value for command key
-      def [](cmdkey)        ; @commands[cmdkey]     ; end
+      def [](cmdkey) ; @commands[cmdkey] ; end
 
       # Returns Request query string with SNP_TERMINAL_STRING "\r\n"
       def to_str ; query + SNP_TERMINAL_STRING ; end # FIXME: include "\r\n"?
       alias :to_s :to_str
       # Returns Request query string. has no SNP_TERMINAL_STRING "\r\n".
-      def inspect ; query ; end
+      def inspect ; query.inspect ; end
       def action ; @commands['action'] ; end
 
       private
 
-      def order_command_pair
-        action = @commands['action']
+      def align_command_pair
         @commands.to_a.sort_by{|pair| SNP_ACTIONS[action].index(pair[0])}
       end
 
       def query
-        normalize
-        order_command_pair.map{|pair| pair.join('=')}.join(SNP_SEPARATOR)
+        # @commands is already normalized
+        align_command_pair.map{|pair| pair.join('=')}.join(SNP_SEPARATOR)
       end
 
-      # normalize item pairs
+      # normalize command item pairs {cmdkey => value}
       # - symbol keys and upcase KEYS are normalized into downcased string keys.
-      # - query should not have any "\r". use "\n"
-      # - when value is nil, delete the item pair.
+      # - value should not have any "\r". use one "\n" as a newline.
+      # - {'action' => 'add-class' or :add_class} are {'action' => 'add_class'}.
+      # - when value is nil, delete the pair.
       def normalize
-        norm_commands = Hash[*@commands.map{|k, v| [crlf2lf(k).downcase, crlf2lf(v)]}.flatten]
-        action = normalize_action(norm_commands['action'])
-        norm_commands['action'] = action
+        unnormalized_commands = @commands.dup
         @commands = SNP_HEADER.dup
-        available_commands_in(action).each do |cmd|
-          @commands[cmd] = norm_commands[cmd] if norm_commands[cmd]
-        end
+        unnormalized_commands.each{|cmdkey, value| self[cmdkey] = value}
+        available_commands = SNP_ACTIONS[self.action] || [] # or raise
+        @commands.delete_if{|cmdkey, value| !available_commands.include?(cmdkey)}
+        @commands.delete_if{|cmdkey, value| value.nil?} # || value.empty? # TODO: "timeout=" is vaild SNP?
+        @commands
       end
 
-      def normalize_action(action_type)
-        action_type.downcase.gsub(/-/){'_'}.sub(/\Aaddclass\Z/){'add_class'}
+      def normalize_cmdkey(cmdkey)
+        crlf2lf(cmdkey).downcase
       end
-
-      def available_commands_in(action)
-        SNP_ACTIONS[action] || {}
+      def normalize_value(value)
+        crlf2lf(value)
       end
 
       def crlf2lf(s)
         s ? s.to_s.gsub(/\r\n/){"\n"}.gsub(/\r/){"\n"} : s
       end
 
+      def normalize_action_value(value)
+        normalize_value(value).downcase.gsub(/-/){'_'}.sub(/\Aaddclass\Z/){'add_class'}
+      end
     end
   end
 end

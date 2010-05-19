@@ -16,6 +16,9 @@ class Snarl
       class SNP_OK < Casual ; end
       # (0) OK
 
+      class SNP_ERROR_NOT_RUNNING < Casual ; end
+      # (201) Incoming network notification handling has been disabled by the user.
+
       class SNP_ERROR_NOT_REGISTERED < Casual ; end
       # (202) The application hasn't been registered.
 
@@ -25,10 +28,11 @@ class Snarl
       class SNP_ERROR_CLASS_ALREADY_EXISTS < Casual ; end
       # (204) Class is already registered.
 
-      class Fatal < SNPError ; end
-
-      class SNP_ERROR_FAILED < Fatal ; end
+      # "Do not Disturb" often raises this error...
+      class SNP_ERROR_FAILED < Casual ; end #Fatal ; end
       # (101) An internal error occurred - usually this represents a fault within Snarl itself.
+
+      class Fatal < SNPError ; end
 
       class SNP_ERROR_UNKNOWN_COMMAND < Fatal ; end
       # (102) An unknown action was specified.
@@ -38,9 +42,6 @@ class Snarl
 
       class SNP_ERROR_BAD_PACKET < Fatal ; end
       # (107) The command packet is wrongly formed.
-
-      class SNP_ERROR_NOT_RUNNING < Fatal ; end
-      # (201) Incoming network notification handling has been disabled by the user.
 
       class RUBYSNARL_UNKNOWN_RESPONSE < Fatal ; end
       # (???) Snarl returns unknown return code.

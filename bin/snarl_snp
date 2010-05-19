@@ -1,0 +1,112 @@
+#!/usr/local/bin/ruby
+require 'optparse'
+require 'yaml'
+$LOAD_PATH.unshift(File.join(File.dirname(File.expand_path(__FILE__)), '/../lib/'))
+require 'snarl/snp'
+
+class SNPBin
+
+  BINCMD_OPTION = {
+    "host" => {
+      :opt => ['-H host',  '--host=host'],
+      :help => "the host address to send notification message. if you run on Snarl machine, set 'localhost' or '127.0.0.1'.  Default: localhost"
+    },
+    "port" => {
+      :opt => ['-p port',  '--port=port'],
+      :help => "the port to send notification message. SNP default is 9887.  Default: 9887"
+    },
+    "app"  => {
+      :opt => ['-a app',   '--app=app'],
+      :help => "the name of your messaging program. this is shown on Snarl Setting window until unregister.  Default: (nothing, anonymous application)"
+    },
+    "class" => {
+      :opt => ['-c class', '--class=class',],
+      :help => "the class type of message. same classed message is treated as a 'same class' message.  Default:(nothing, anonymous class)"
+    },
+    "title" => {
+      :opt => ['-t title', '--title=title'],
+      :help => "the notification message title.  Default: Ruby-Snarl" # default maybe
+    },
+    "timeout" => {
+      :opt => ['-s sec', '-d sec', '--span=sec', '--timeout=sec', '--duration=sec'],
+      :help => "the popup duration time(seccond). when sec=0, popup is sticky (never automatically closed).  Default: 10"
+    },
+    "sticky" => {
+      :opt => ['--sticky'],
+      :help => "make notification message 'sticky'. the message popup never closes automatically. -s sec option are ignored."
+    },
+    "icon" => {
+      :opt => ['--icon=url_or_path'],
+      :help => "the icon path for notification message. http URL or absolute path or relative path (relative to Snarl work dir). image type are JPEG, GIF, PNG.  Default: (nothing, default icon of Snarl style)"
+    },
+    "text" => {
+      :opt => ['-m message_text', '--message=message_text', '--text=message_text'],
+      :help => "the notification message text."
+    },
+    # "notification" => ['-n notification_subcmd_set'] # TODO:
+    "unregister" => {
+      :opt => ['-u', '--unregister'],
+      :help => "unregister application on Snarl setting after notification.  Default (unset)"
+    },
+    "verbose" => {
+      :opt => ['--verbose'],
+      :help => "print SNP log to stdout"
+    },
+    "yaml" => {
+      :opt => ['-y yaml_or_path', '--yaml=yaml_or_path', '--config=yaml_or_path'],
+      :help => "read and set paramater from YAML file or YAML string. for yaml details, see YAML.rdoc"
+    },
+  }
+  # --yaml #=> YAML String / --config #=> YAML path
+  # --silent / --quiet / --verbose
+
+  def initialize
+    @argv_option = {}
+    @config = {}
+  end
+
+  attr_reader :argv_option, :config
+
+  def parse_argv
+    OptionParser.new do |opt|
+      BINCMD_OPTION.each do |name, data|
+        instance_eval "opt.on(*(#{data[:opt].inspect} << \"#{data[:help]}\")){|v| @argv_option[\"#{name}\"] = v}"
+      end
+      opt.parse!(ARGV)
+    end
+  end
+
+  def merge_yaml_from_argvopt
+    if @argv_option['yaml'] then
+      @config.update(YAML.load(File.open(@argv_option['yaml']){|f| f.read}))
+      @argv_option.delete('yaml')
+    end
+  end
+  def merge_all_argvopt_to_config
+    @config.update(@argv_option)
+  end
+  def pick_logger
+    if @argv_option['verbose'] then
+      require 'logger'
+      @logger = Logger.new($stdout)
+      @argv_option.delete('verbose')
+    else
+      @logger = nil
+    end
+  end
+
+  def exec_snplib
+    # oh reconvert to yaml
+    Snarl::SNP.load(@config.to_yaml, @logger)
+  end
+
+  def run
+    parse_argv
+    merge_yaml_from_argvopt
+    pick_logger
+    merge_all_argvopt_to_config
+    exec_snplib
+  end
+end
+
+SNPBin.new.run unless defined?(TEST_SNARL_SNP_BIN_SPEC)
