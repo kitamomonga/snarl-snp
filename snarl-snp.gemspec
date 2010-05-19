@@ -5,11 +5,11 @@
 
 Gem::Specification.new do |s|
   s.name = %q{snarl-snp}
-  s.version = "0.1.9"
+  s.version = "0.2.0"
 
   s.required_rubygems_version = Gem::Requirement.new(">= 0") if s.respond_to? :required_rubygems_version=
   s.authors = ["kitamomonga"]
-  s.date = %q{2010-05-19}
+  s.date = %q{2010-05-20}
   s.default_executable = %q{snarl_snp}
   s.description = %q{Snarl Network Protocol Client. Snarl is the notification program for Windows. You can send notification messages to Snarl with SNP on LAN.}
   s.email = %q{ezookojo@gmail.com}
